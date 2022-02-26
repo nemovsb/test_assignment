@@ -1,0 +1,15 @@
+{
+    "http_server": {
+        "port": "8081",
+        "read_timeout": 10,
+        "write_timeout": 10
+    },
+    "data_base":{
+        "host":"localhost",
+        "port":"5432",
+        "user":"myuser",
+        "password":"secret",
+        "db":"mydb"
+    },
+    "zap_logger_mode": "development"
+}
