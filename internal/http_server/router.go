@@ -6,15 +6,11 @@ import (
 
 type SiteHandler interface {
 	CheckSite(ctx *gin.Context)
-}
-
-type ReportHandler interface {
 	GetReport(ctx *gin.Context)
 }
 
 type HandlerSet struct {
 	SiteHandler
-	ReportHandler
 }
 
 func NewHandlerSet(site SiteHandler) HandlerSet {

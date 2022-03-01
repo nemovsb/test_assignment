@@ -14,11 +14,11 @@ func GetHTTPServerConfig(config *ConfigApp) server.ServerConfig {
 }
 
 func GetDBConfig(config *ConfigApp) storage.DBConfig {
-return storage.DBConfig{
-	Host:config.
-    Port     string
-    User     string
-    Password string
-    DB       string
-}
+	return storage.DBConfig{
+		Host:     config.DataBase.Host,
+		Port:     config.DataBase.Port,
+		User:     config.DataBase.User,
+		Password: config.DataBase.Password,
+		DBName:   config.DataBase.DBName,
+	}
 }

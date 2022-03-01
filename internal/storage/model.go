@@ -9,5 +9,5 @@ import (
 type Sites struct {
 	gorm.Model
 	Name        string
-	LoadingTime time.Time
+	LoadingTime time.Duration
 }

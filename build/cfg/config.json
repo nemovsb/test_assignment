@@ -9,7 +9,7 @@
         "port":"5432",
         "user":"myuser",
         "password":"secret",
-        "db":"mydb"
+        "db_name":"mydb"
     },
     "zap_logger_mode": "development"
 }

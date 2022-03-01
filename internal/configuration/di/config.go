@@ -29,7 +29,7 @@ type DataBase struct {
 	Port     string `mapstructure:"port"`
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
-	DB       string `mapstructure:"db"`
+	DBName   string `mapstructure:"db_name"`
 }
 
 type ConfigApp struct {

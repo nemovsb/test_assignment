@@ -13,7 +13,7 @@ type DBConfig struct {
 	Port     string
 	User     string
 	Password string
-	DB       string
+	DBName   string
 }
 
 func NewDBConn(config DBConfig) (*gorm.DB, error) {
@@ -30,7 +30,7 @@ func NewDBConn(config DBConfig) (*gorm.DB, error) {
 	url.WriteString(`:`)
 	url.WriteString(config.Port)
 	url.WriteString(`/`)
-	url.WriteString(config.DB)
+	url.WriteString(config.DBName)
 
 	fmt.Println(url.String()) //TODO
 
@@ -38,5 +38,8 @@ func NewDBConn(config DBConfig) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't create new db connection: %s", err)
 	}
+
+	db.AutoMigrate(&Sites{})
+
 	return db, err
 }
