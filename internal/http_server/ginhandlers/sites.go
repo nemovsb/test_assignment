@@ -1,8 +1,10 @@
 package ginhandlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"test_assignment/internal/storage"
@@ -26,31 +28,41 @@ func NewSiteHandler(db *gorm.DB, logger *zap.Logger) *SiteHandler {
 }
 
 func (h *SiteHandler) CheckSite(ctx *gin.Context) {
-	url, ok := ctx.GetQuery("search")
+	serchUrl, ok := ctx.GetQuery("search")
 	if !ok {
-		h.StatusBadRequest(ctx, fmt.Errorf("search param not found:"))
+		h.StatusBadRequest(ctx, errors.New("search param not found"))
 		return
 	}
 
-	// site := storage.Sites{}
-	// h.DB.
+	_, err := url.ParseRequestURI(serchUrl)
+	if err != nil {
+		fmt.Printf("Error : %s\n", err)
+		serchUrl = fmt.Sprint(`http://`, serchUrl)
+	}
+
+	fmt.Println("  url  :  ", serchUrl)
+
+	var site storage.Sites
+	res := h.DB.Find(&site, storage.Sites{Name: serchUrl})
+	//fmt.Printf("res: %+v\n", res)
+	//fmt.Printf("error: %+v\n", errors.Is(res.Error, gorm.ErrRecordNotFound))
+	//fmt.Printf("site: %+v\n", site)
+	fmt.Printf("time.Now():  %+v\n", time.Now().UTC())
+	fmt.Printf("site.UpdatedAt:  %+v\n", site.UpdatedAt)
+	fmt.Printf("time.Since(site.UpdatedAt): %+v\n", time.Since(site.UpdatedAt))
+
+	if res.RowsAffected != 0 && time.Since(site.UpdatedAt) <= time.Second*time.Duration(30) {
+		ctx.JSON(http.StatusOK, gin.H{"duration": site.LoadingTime})
+		return
+	}
 
 	start := time.Now()
-	// Код для измерения
+	//Код для измерения
 	client := http.Client{
 		Timeout: time.Duration(60) * time.Second,
 	}
 
-	// Создание
-	h.DB.Create(&storage.Sites{Name: "D42", LoadingTime: time.Second})
-
-	// Чтение
-	var site storage.Sites
-	h.DB.First(&site, 1) // find product with integer primary key
-
-	fmt.Printf("site: %+v\n")
-
-	_, err := client.Get(url)
+	_, err = client.Get(serchUrl)
 	if err != nil {
 		h.StatusInternalServerError(ctx, err)
 		return
@@ -58,6 +70,10 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 
 	duration := time.Since(start)
 	fmt.Printf("duration: %s\n", duration)
+
+	h.DB.Create(&storage.Sites{Name: serchUrl, LoadingTime: duration})
+
+	ctx.JSON(http.StatusOK, gin.H{"duration": duration})
 
 }
 

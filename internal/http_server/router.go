@@ -24,7 +24,7 @@ func NewRouter(h HandlerSet) (router *gin.Engine) {
 
 	sites := router.Group("/sites")
 	{
-		sites.GET("/", h.SiteHandler.CheckSite)
+		sites.GET("", h.SiteHandler.CheckSite)
 		sites.GET("/stats", h.SiteHandler.GetReport)
 	}
 

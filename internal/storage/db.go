@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -34,7 +35,11 @@ func NewDBConn(config DBConfig) (*gorm.DB, error) {
 
 	fmt.Println(url.String()) //TODO
 
-	db, err := gorm.Open(postgres.Open(url.String()), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(url.String()), &gorm.Config{
+		NowFunc: func() time.Time {
+			return time.Now().Local().UTC()
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("can't create new db connection: %s", err)
 	}
