@@ -7,9 +7,9 @@ import (
 
 func GetHTTPServerConfig(config *ConfigApp) server.ServerConfig {
 	return server.ServerConfig{
-		Port:     config.HttpServer.Port,
-		RTimeout: config.HttpServer.RTimeout,
-		WTimeout: config.HttpServer.WTimeout,
+		Port:    config.HttpServer.Port,
+		Timeout: config.HttpServer.Timeout,
+		TTL:     config.HttpServer.TTL,
 	}
 }
 

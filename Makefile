@@ -17,15 +17,7 @@ NC=\033[0m # No Color
 endif
 
 
-.PHONY: all help build test start migration-down wire-gen mockgen-gen
-
-all: help
-help:
-	@echo
-	@echo " For correct :to work correctly, do not forget to create a config folder with files. You can take it from the /example folder and reconfigure it"
-	@echo
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | column -t -s ':' | sed -e 's/\\$$//' | sed -e 's/##//'
-	@echo
+.PHONY: build test start migration-down wire-gen mockgen-gen
 
 ## build: build project
 build:
@@ -39,12 +31,6 @@ test:
 	@echo ">${YELLOW} Running unit tests...${NC}"
 	go test -v ./...
 	@echo ">${GREEN} All tests passed${NC}"
-
-## start: start project
-start:
-	@echo ">${GREEN} start service${NC}"
-	./app1
-	@echo
 
 ## build for docker-compose
 GOOS=linux
@@ -61,15 +47,12 @@ DOCKER_BUILDVARS=GOOS=linux GOARCH=${GOARCH} CGO_ENABLED=${CGO_ENABLED}
 
 build-for-compose:
 	@echo
-	${DOCKER_BUILDVARS} go build -o learning_for_alpine -ldflags "-s -w"
+	${DOCKER_BUILDVARS} go build -o test_assignment_for_alpine -ldflags "-s -w"
 	@echo ">${GREEN} complete${NC}"
 	@echo
 
 
-## COMPOSE_TEST_FILE=test/docker-compose.host-mode.yml
-## Optionally you can use test environment based on the docker network.
 COMPOSE_TEST_FILE=docker-compose.yml
-
 COMPOSE_TEST_CMD=docker-compose --project-name dev_${PROJECTNAME} --file ${COMPOSE_TEST_FILE}
 COMPOSE_TEST_PULL_CMD=${COMPOSE_TEST_CMD} pull
 

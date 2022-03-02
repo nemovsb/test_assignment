@@ -41,7 +41,7 @@ func main() {
 		logger.Sugar().Fatalf("No DB conn: %s", err)
 	}
 
-	siteHandler := ginhandlers.NewSiteHandler(db, logger)
+	siteHandler := ginhandlers.NewSiteHandler(config, db, logger)
 	handlerSet := server.NewHandlerSet(siteHandler)
 	router := server.NewRouter(handlerSet)
 

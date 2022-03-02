@@ -7,9 +7,9 @@ import (
 )
 
 type ServerConfig struct {
-	Port     string
-	RTimeout uint
-	WTimeout uint
+	Port    string
+	Timeout uint
+	TTL     uint
 }
 
 type Server struct {

@@ -1,9 +1,10 @@
-create DATABASE if not exists mydb;
+create DATABASE mydb;
 
-create USER if not exists myuser password 'secret';
-grant all privileges on database sales to myuser;
+create USER myuser password 'secret';
+grant all privileges on database mydb to myuser;
 
-create table if not exists sites
+drop table if exists sites;
+create table sites
 (
     id bigserial primary key,
     created_at timestamp,

@@ -19,9 +19,9 @@ const EnvProduction = "Production"
 var ErrUnmarshalConfig = errors.New("viper failed to unmarshal app config")
 
 type HttpServer struct {
-	Port     string `mapstructure:"port"`
-	RTimeout uint   `mapstructure:"read_timeout"`
-	WTimeout uint   `mapstructure:"write_timeout"`
+	Port    string `mapstructure:"port"`
+	Timeout uint   `mapstructure:"timeout"`
+	TTL     uint   `mapstructure:"ttl"`
 }
 
 type DataBase struct {
@@ -77,8 +77,8 @@ func NewViper(filename string) *viper.Viper {
 	// (basically so viper knows they exist)
 
 	v.SetDefault("HttpServer.Port", "8081")
-	v.SetDefault("HttpServer.RTimeout", 30)
-	v.SetDefault("HttpServer.WTimeout", 30)
+	v.SetDefault("HttpServer.Timeout", 30)
+	v.SetDefault("HttpServer.TTL", 30)
 
 	v.SetDefault("ZapLoggerMode", "production")
 
@@ -141,10 +141,8 @@ func (conf *ConfigApp) validateConfig() (err error) {
 	switch {
 	case conf.HttpServer.Port == "":
 		return errors.New("application Port is not set")
-	case conf.HttpServer.WTimeout == 0:
+	case conf.HttpServer.Timeout == 0:
 		return errors.New("application Write timeout is not set")
-	case conf.HttpServer.RTimeout == 0:
-		return errors.New("application Read timeout is not set")
 	default:
 		return err
 	}
