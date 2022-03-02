@@ -30,7 +30,7 @@ func NewSiteHandler(db *gorm.DB, logger *zap.Logger) *SiteHandler {
 func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 	serchUrl, ok := ctx.GetQuery("search")
 	if !ok {
-		h.StatusBadRequest(ctx, errors.New("search param not found"))
+		h.StatusBadRequest(ctx, errors.New(`"search" param not found`))
 		return
 	}
 
@@ -44,6 +44,7 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 
 	var site storage.Sites
 	res := h.DB.Find(&site, storage.Sites{Name: serchUrl})
+
 	//fmt.Printf("res: %+v\n", res)
 	//fmt.Printf("error: %+v\n", errors.Is(res.Error, gorm.ErrRecordNotFound))
 	//fmt.Printf("site: %+v\n", site)
@@ -57,11 +58,10 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 	}
 
 	start := time.Now()
-	//Код для измерения
+
 	client := http.Client{
 		Timeout: time.Duration(60) * time.Second,
 	}
-
 	_, err = client.Get(serchUrl)
 	if err != nil {
 		h.StatusInternalServerError(ctx, err)
@@ -78,5 +78,38 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 }
 
 func (h *SiteHandler) GetReport(ctx *gin.Context) {
+
+	type Param struct {
+		From time.Time `form:"from" binding:"required"`
+		To   time.Time `form:"to" binding:"required"`
+	}
+
+	param := new(Param)
+	if err := ctx.ShouldBind(param); err != nil {
+		h.StatusBadRequest(ctx, err)
+		return
+	}
+
+	// fromDate, ok := ctx.GetQuery("from")
+	// if !ok {
+	// 	h.StatusBadRequest(ctx, errors.New(`"from" param not found`))
+	// 	return
+	// }
+	// toDate, ok := ctx.GetQuery("to")
+	// if !ok {
+	// 	h.StatusBadRequest(ctx, errors.New(`"to" param not found`))
+	// 	return
+	// }
+
+	report := []storage.Report{}
+
+	h.DB.Table("sites").
+		Select(`name, avg(loading_time)::bigint AS "avg_duration"`).
+		Where("created_at >= ?", param.From).
+		Where("created_at <= ?", param.To).Group("name").
+		Find(&report)
+	//fmt.Printf("Report : %+v\n", report)
+
+	ctx.JSON(http.StatusOK, report)
 
 }
