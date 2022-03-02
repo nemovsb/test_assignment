@@ -1,5 +1,12 @@
 # test_assignment
+
 ---
+## Run local compose command:
+
+make compose-test-up
+
+---
+
 ## Request examples:
 
 curl 'localhost:8081/sites&search=ya.ru'

@@ -1,7 +1,7 @@
 version: "3.7"
 services:
 
-  test_assidnment:
+  test_assignment:
     build:
       dockerfile: ./Dockerfile
       context: ./

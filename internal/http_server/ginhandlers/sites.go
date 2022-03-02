@@ -23,7 +23,7 @@ type SiteHandler struct {
 	CommonHandler
 }
 
-func NewSiteHandler(config di.ConfigApp, db *gorm.DB, logger *zap.Logger) *SiteHandler {
+func NewSiteHandler(config *di.ConfigApp, db *gorm.DB, logger *zap.Logger) *SiteHandler {
 	return &SiteHandler{
 		TTL:     config.HttpServer.TTL,
 		Timeout: config.HttpServer.Timeout,
