@@ -1,0 +1,15 @@
+{
+    "http_server": {
+        "port": "8081",
+        "timeout": 30,
+        "ttl": 30
+    },
+    "data_base":{
+        "host":"postgres",
+        "port":"5432",
+        "user":"myuser",
+        "password":"secret",
+        "db_name":"mydb"
+    },
+    "zap_logger_mode": "development"
+}
