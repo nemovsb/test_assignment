@@ -36,7 +36,7 @@ func main() {
 	logger.Info("application", zap.String("event", "initializing"))
 	logger.Info("application", zap.Any("resolved_configuration", config))
 
-	db, err := storage.NewDBConn(di.GetDBConfig(config))
+	db, err := storage.NewPGDB(di.GetDBConfig(config))
 	if err != nil {
 		logger.Sugar().Fatalf("No DB conn: %s", err)
 	}
