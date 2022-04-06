@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"test_assignment/internal/configuration/di"
+	"test_assignment/internal/configuration/cfg"
 	server "test_assignment/internal/http_server"
 	"test_assignment/internal/http_server/ginhandlers"
 	"test_assignment/internal/storage"
@@ -23,7 +23,7 @@ var ErrOsSignal = errors.New("got os signal")
 
 func main() {
 
-	config, err := di.ViperConfigurationProvider(os.Getenv("GOLANG_ENVIRONMENT"), false)
+	config, err := cfg.ViperConfigurationProvider(os.Getenv("GOLANG_ENVIRONMENT"), false)
 	if err != nil {
 		log.Fatal("Read config error: ", err)
 	}
@@ -36,7 +36,7 @@ func main() {
 	logger.Info("application", zap.String("event", "initializing"))
 	logger.Info("application", zap.Any("resolved_configuration", config))
 
-	db, err := storage.NewPGDB(di.GetDBConfig(config))
+	db, err := storage.NewPGDB(cfg.GetDBConfig(config))
 	if err != nil {
 		logger.Sugar().Fatalf("No DB conn: %s", err)
 	}
@@ -45,7 +45,7 @@ func main() {
 	handlerSet := server.NewHandlerSet(siteHandler)
 	router := server.NewRouter(handlerSet)
 
-	server := server.NewServer(di.GetHTTPServerConfig(config), router)
+	server := server.NewServer(cfg.GetHTTPServerConfig(config), router)
 
 	var (
 		serviceGroup        group.Group

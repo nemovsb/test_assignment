@@ -1,4 +1,4 @@
-package di
+package cfg
 
 import (
 	server "test_assignment/internal/http_server"
