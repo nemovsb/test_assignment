@@ -9,11 +9,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type DB interface {
-	GetSiteByName(name string) (*Sites, int64)
-	CreateSite(name string, duration time.Duration) int64
-	GetReportByDate(from, to time.Time) (*[]Report, int64)
-}
+// type DB interface {
+// 	GetSiteByName(name string) (*Sites, int64)
+// 	CreateSite(name string, duration time.Duration) int64
+// 	GetReportByDate(from, to time.Time) (*[]Report, int64)
+// }
 
 type PGDB struct {
 	Connect *gorm.DB

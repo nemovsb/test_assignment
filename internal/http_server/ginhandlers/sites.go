@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"test_assignment/internal/configuration/di"
+	"test_assignment/internal/configuration/cfg"
 	"test_assignment/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +22,18 @@ type SiteHandler struct {
 	CommonHandler
 }
 
-func NewSiteHandler(config *di.ConfigApp, db storage.DB, logger *zap.Logger) *SiteHandler {
+type Casher interface {
+	Get(string) storage.Sites
+	Set(site storage.Sites, ttl time.Duration)
+}
+
+type DB interface {
+	GetSiteByName(name string) (*storage.Sites, int64)
+	CreateSite(name string, duration time.Duration) int64
+	GetReportByDate(from, to time.Time) (*[]storage.Report, int64)
+}
+
+func NewSiteHandler(config *cfg.ConfigApp, db DB, logger *zap.Logger) *SiteHandler {
 	return &SiteHandler{
 		TTL:     config.HttpServer.TTL,
 		Timeout: config.HttpServer.Timeout,
