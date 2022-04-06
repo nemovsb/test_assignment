@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"test_assignment/internal/configuration/cfg"
@@ -17,14 +18,15 @@ import (
 type SiteHandler struct {
 	TTL     uint
 	Timeout uint
-	DB      storage.DB
+	Cache   Cacher
+	DB      DB
 	Logger  *zap.Logger
 	CommonHandler
 }
 
-type Casher interface {
-	Get(string) storage.Sites
-	Set(site storage.Sites, ttl time.Duration)
+type Cacher interface {
+	Get(string) (time.Duration, bool)
+	Set(searchUrlname string, duration time.Duration)
 }
 
 type DB interface {
@@ -33,10 +35,11 @@ type DB interface {
 	GetReportByDate(from, to time.Time) (*[]storage.Report, int64)
 }
 
-func NewSiteHandler(config *cfg.ConfigApp, db DB, logger *zap.Logger) *SiteHandler {
+func NewSiteHandler(config *cfg.ConfigApp, cache Cacher, db DB, logger *zap.Logger) *SiteHandler {
 	return &SiteHandler{
 		TTL:     config.HttpServer.TTL,
 		Timeout: config.HttpServer.Timeout,
+		Cache:   cache,
 		DB:      db,
 		Logger:  logger,
 	}
@@ -56,6 +59,12 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 	}
 
 	fmt.Println("  url  :  ", searchUrl)
+
+	siteDuration, ok := h.Cache.Get(searchUrl)
+	if ok {
+		ctx.JSON(http.StatusOK, gin.H{"duration": siteDuration})
+		return
+	}
 
 	site, rows := h.DB.GetSiteByName(searchUrl)
 
@@ -77,6 +86,13 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 
 	duration := time.Since(start)
 	fmt.Printf("duration: %s\n", duration)
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func(url string, dur time.Duration) {
+		h.Cache.Set(url, dur)
+	}(searchUrl, duration)
 
 	h.DB.CreateSite(searchUrl, duration)
 
