@@ -31,7 +31,7 @@ curl 'localhost:8081/sites/stats?from=2022-03-01T00:04:05Z&to=2022-03-02T23:04:0
 {
     "http_server": {
         "port": "8081",
-        "timeout": 30,   
+        "timeout": 30,
         "ttl": 30
     },
     "data_base":{
@@ -40,6 +40,10 @@ curl 'localhost:8081/sites/stats?from=2022-03-01T00:04:05Z&to=2022-03-02T23:04:0
         "user":"myuser",
         "password":"secret",
         "db_name":"mydb"
+    },
+    "cache":{
+        "host": "redis",
+        "port": "6379"
     },
     "zap_logger_mode": "development"
 }
