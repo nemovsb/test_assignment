@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"test_assignment/internal/configuration/di"
-	"test_assignment/internal/storage"
 	"testing"
 	"time"
 
@@ -21,43 +19,47 @@ func NewDBMock() *DBMock {
 	return &DBMock{}
 }
 
-func (db *DBMock) GetSiteByName(name string) (*storage.Sites, int64) {
-	created, err := time.Parse("2006-01-02T15:04:05Z07:00", "2022-03-01T00:04:05Z")
-	if err != nil {
-		fmt.Printf("error: %s\n", err)
-		return nil, 0
-	}
-	var site storage.Sites
+func (db *DBMock) GetSiteDuration(name string) (time.Duration, bool) {
+	LoadingTime := time.Duration(15923367)
 
-	site.ID = 1
-	site.CreatedAt = created
-	site.UpdatedAt = created
-	site.Name = "http://yandex.ru"
-	site.LoadingTime = 15923367
-
-	return &site, 1
+	return LoadingTime, true
 }
 
 func (db *DBMock) CreateSite(name string, duration time.Duration) int64 {
 	return 1
 }
 
-func (db *DBMock) GetReportByDate(from, to time.Time) (*[]storage.Report, int64) {
-	return &[]storage.Report{
+func (db *DBMock) GetReportByDate(from, to time.Time) (*[]Report, int64) {
+	return &[]Report{
 		{Name: "yandex.ru", AvgDuration: 12345678},
 		{Name: "ya.ru", AvgDuration: 12345158}}, 1
 
 }
 
+type CacheMock struct{}
+
+func NewCacheMock() *CacheMock {
+	return &CacheMock{}
+}
+
+func (c *CacheMock) Get(name string) (time.Duration, bool) {
+	if name == "http://yandex.ru" {
+		return 15923367, true
+	}
+
+	return 0, false
+}
+
+func (c *CacheMock) Set(searchUrlname string, duration time.Duration) {
+
+}
+
 func TestCheckSite(t *testing.T) {
 
-	config := &di.ConfigApp{}
-	config.TTL = 30000000000000000
-	config.Timeout = 30
-
 	db := NewDBMock()
+	cache := NewCacheMock()
 
-	handler := NewSiteHandler(config, db, zap.NewNop())
+	handler := NewSiteHandler(30, 30, cache, db, zap.NewNop())
 
 	rr := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rr)
@@ -87,13 +89,11 @@ func TestCheckSite(t *testing.T) {
 }
 
 func TestGetReport(t *testing.T) {
-	config := &di.ConfigApp{}
-	config.TTL = 30
-	config.Timeout = 30
 
 	db := NewDBMock()
+	cache := NewCacheMock()
 
-	handler := NewSiteHandler(config, db, zap.NewNop())
+	handler := NewSiteHandler(30, 30, cache, db, zap.NewNop())
 
 	rr := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rr)
@@ -106,7 +106,7 @@ func TestGetReport(t *testing.T) {
 	ctx.Request = req
 	handler.GetReport(ctx)
 
-	responseBody := new([]storage.Report)
+	responseBody := new([]Report)
 
 	err = json.Unmarshal(rr.Body.Bytes(), &responseBody)
 	if err != nil {
@@ -114,7 +114,7 @@ func TestGetReport(t *testing.T) {
 		t.Error("Unable to unmarshal JSON")
 	}
 
-	expectedResponseBody := &[]storage.Report{
+	expectedResponseBody := &[]Report{
 		{Name: "yandex.ru", AvgDuration: 12345678},
 		{Name: "ya.ru", AvgDuration: 12345158}}
 

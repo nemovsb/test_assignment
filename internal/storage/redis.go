@@ -9,11 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// type Cacher interface {
-// 	Get(string) Sites
-// 	Set(site Sites, ttl time.Duration)
-// }
-
 type RedisStorage struct {
 	Client *redis.Client
 	TTL    time.Duration
@@ -76,7 +71,7 @@ func (c *RedisStorage) Get(siteName string) (time.Duration, bool) {
 }
 
 func (c *RedisStorage) Set(searchUrlname string, duration time.Duration) {
-	err := c.Client.Set(searchUrlname, duration, c.TTL).Err()
+	err := c.Client.Set(searchUrlname, uint(duration), c.TTL*time.Second).Err()
 	if err != nil {
 		c.Logger.Error("redis set new value error", zap.Error(err))
 	}

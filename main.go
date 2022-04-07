@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"test_assignment/internal/configuration/cfg"
 	server "test_assignment/internal/http_server"
@@ -36,12 +37,17 @@ func main() {
 	logger.Info("application", zap.String("event", "initializing"))
 	logger.Info("application", zap.Any("resolved_configuration", config))
 
-	db, err := storage.NewPGDB(cfg.GetDBConfig(config))
+	db, err := storage.NewPGDB(cfg.GetDBConfig(config), time.Duration(config.TTL))
 	if err != nil {
 		logger.Sugar().Fatalf("No DB conn: %s", err)
 	}
 
-	siteHandler := ginhandlers.NewSiteHandler(config, db, logger)
+	cache, err := storage.NewRedisStorage(cfg.GetCacheConfig(config), time.Duration(config.TTL), logger)
+	if err != nil {
+		logger.Error("No cache connection: ", zap.Error(err))
+	}
+
+	siteHandler := ginhandlers.NewSiteHandler(config.TTL, config.Timeout, cache, db, logger)
 	handlerSet := server.NewHandlerSet(siteHandler)
 	router := server.NewRouter(handlerSet)
 
@@ -71,6 +77,7 @@ func main() {
 	})
 
 	err = serviceGroup.Run()
+	cache.Client.Close()
 	logger.Info("services stopped", zap.Error(err))
 
 	zapLoggerCleanup()

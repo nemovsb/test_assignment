@@ -11,5 +11,9 @@
         "password":"secret",
         "db_name":"mydb"
     },
+    "cache":{
+        "host": "redis",
+        "port": "6379"
+    },
     "zap_logger_mode": "development"
 }

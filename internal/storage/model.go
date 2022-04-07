@@ -12,7 +12,7 @@ type Sites struct {
 	LoadingTime time.Duration
 }
 
-type Report struct {
-	Name        string        `json:"name"`
-	AvgDuration time.Duration `json:"avg_duration"`
-}
+// type Report struct {
+// 	Name        string        `json:"name"`
+// 	AvgDuration time.Duration `json:"avg_duration"`
+// }

@@ -32,10 +32,16 @@ type DataBase struct {
 	DBName   string `mapstructure:"db_name"`
 }
 
+type Cache struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
+}
+
 type ConfigApp struct {
 	ZapLoggerMode string `mapstructure:"zap_logger_mode"`
 	HttpServer    `mapstructure:"http_server"`
 	DataBase      `mapstructure:"data_base"`
+	Cache         `mapstructure:"cache"`
 }
 
 func ViperConfigurationProvider(env string, writeConfig bool) (cfg *ConfigApp, err error) {

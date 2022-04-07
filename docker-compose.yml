@@ -10,6 +10,7 @@ services:
       - postgres
     depends_on:
       - postgres
+      - redis
     ports:
       - "8081:8081"
 
@@ -27,3 +28,8 @@ services:
       - "5432"  
     ports:
       - "5432:5432"
+
+  redis:
+    image: redis:7.0-rc3-alpine3.15
+    ports:
+      - "6379:6379"
