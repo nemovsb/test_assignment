@@ -22,3 +22,10 @@ func GetDBConfig(config *ConfigApp) storage.DBConfig {
 		DBName:   config.DataBase.DBName,
 	}
 }
+
+func GetCacheConfig(config *ConfigApp) storage.RedisConfig {
+	return storage.RedisConfig{
+		Host: config.Cache.Host,
+		Port: config.Cache.Port,
+	}
+}

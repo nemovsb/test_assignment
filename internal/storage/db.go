@@ -3,40 +3,47 @@ package storage
 import (
 	"fmt"
 	"strings"
+	"test_assignment/internal/http_server/ginhandlers"
 	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-type DB interface {
-	GetSiteByName(name string) (*Sites, int64)
-	CreateSite(name string, duration time.Duration) int64
-	GetReportByDate(from, to time.Time) (*[]Report, int64)
-}
+// type DB interface {
+// 	GetSiteByName(name string) (*Sites, int64)
+// 	CreateSite(name string, duration time.Duration) int64
+// 	GetReportByDate(from, to time.Time) (*[]Report, int64)
+// }
 
 type PGDB struct {
 	Connect *gorm.DB
+	TTL     time.Duration
 }
 
-func NewPGDB(config DBConfig) (*PGDB, error) {
+func NewPGDB(config DBConfig, ttl time.Duration) (*PGDB, error) {
 	conn, err := NewDBConn(config)
 	if err != nil {
 		return nil, fmt.Errorf("postgres connect error: %s", err)
 	}
 	return &PGDB{
 		Connect: conn,
+		TTL:     ttl,
 	}, nil
 }
 
-func (db *PGDB) GetSiteByName(name string) (*Sites, int64) {
+func (db *PGDB) GetSiteDuration(name string) (time.Duration, bool) {
 	var site Sites
-	res := db.Connect.Where(`updated_at = (?)`, db.Connect.Table("sites").
+	res := db.Connect.Select(site.LoadingTime).Where(`updated_at = (?)`, db.Connect.First(&site).
 		Select(`max(updated_at)`).
 		Group(`name`).
 		Where("name = ?", name)).
 		Find(&site)
-	return &site, res.RowsAffected
+	if res.RowsAffected != 0 && time.Since(site.UpdatedAt) <= time.Second*time.Duration(db.TTL) {
+		return site.LoadingTime, true
+	}
+
+	return site.LoadingTime, false
 }
 
 func (db *PGDB) CreateSite(name string, duration time.Duration) int64 {
@@ -44,8 +51,8 @@ func (db *PGDB) CreateSite(name string, duration time.Duration) int64 {
 	return res.RowsAffected
 }
 
-func (db *PGDB) GetReportByDate(from, to time.Time) (*[]Report, int64) {
-	report := []Report{}
+func (db *PGDB) GetReportByDate(from, to time.Time) (*[]ginhandlers.Report, int64) {
+	report := []ginhandlers.Report{}
 
 	res := db.Connect.Table("sites").
 		Select(`name, avg(loading_time)::bigint AS "avg_duration"`).

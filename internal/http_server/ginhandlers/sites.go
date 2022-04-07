@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
-
-	"test_assignment/internal/configuration/di"
-	"test_assignment/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -17,15 +15,33 @@ import (
 type SiteHandler struct {
 	TTL     uint
 	Timeout uint
-	DB      storage.DB
+	Cache   Cacher
+	DB      DB
 	Logger  *zap.Logger
 	CommonHandler
 }
 
-func NewSiteHandler(config *di.ConfigApp, db storage.DB, logger *zap.Logger) *SiteHandler {
+type Cacher interface {
+	Get(string) (time.Duration, bool)
+	Set(searchUrlname string, duration time.Duration)
+}
+
+type DB interface {
+	GetSiteDuration(name string) (time.Duration, bool)
+	CreateSite(name string, duration time.Duration) int64
+	GetReportByDate(from, to time.Time) (*[]Report, int64)
+}
+
+type Report struct {
+	Name        string        `json:"name"`
+	AvgDuration time.Duration `json:"avg_duration"`
+}
+
+func NewSiteHandler(ttl uint, timeout uint, cache Cacher, db DB, logger *zap.Logger) *SiteHandler {
 	return &SiteHandler{
-		TTL:     config.HttpServer.TTL,
-		Timeout: config.HttpServer.Timeout,
+		TTL:     ttl,
+		Timeout: timeout,
+		Cache:   cache,
 		DB:      db,
 		Logger:  logger,
 	}
@@ -46,10 +62,16 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 
 	fmt.Println("  url  :  ", searchUrl)
 
-	site, rows := h.DB.GetSiteByName(searchUrl)
+	siteDuration, ok := h.Cache.Get(searchUrl)
+	if ok {
+		ctx.JSON(http.StatusOK, gin.H{"duration": siteDuration})
+		return
+	}
 
-	if rows != 0 && time.Since(site.UpdatedAt) <= time.Second*time.Duration(h.TTL) {
-		ctx.JSON(http.StatusOK, gin.H{"duration": site.LoadingTime})
+	siteDuration, ok = h.DB.GetSiteDuration(searchUrl)
+
+	if ok {
+		ctx.JSON(http.StatusOK, gin.H{"duration": siteDuration})
 		return
 	}
 
@@ -66,6 +88,12 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 
 	duration := time.Since(start)
 	fmt.Printf("duration: %s\n", duration)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func(url string, dur time.Duration) {
+		h.Cache.Set(url, dur)
+	}(searchUrl, duration)
 
 	h.DB.CreateSite(searchUrl, duration)
 
