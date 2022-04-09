@@ -12,6 +12,7 @@ import (
 	"test_assignment/internal/configuration/cfg"
 	server "test_assignment/internal/http_server"
 	"test_assignment/internal/http_server/ginhandlers"
+	metrics "test_assignment/internal/prometheus"
 	"test_assignment/internal/storage"
 	"test_assignment/pkg/zaplogger"
 
@@ -58,6 +59,9 @@ func main() {
 		interruptionChannel = make(chan os.Signal, 1)
 	)
 
+	metricsServer := metrics.NewPometheusServer("2112")
+	go metricsServer.Run()
+
 	serviceGroup.Add(func() error {
 		signal.Notify(interruptionChannel, syscall.SIGINT, syscall.SIGTERM)
 		osSignal := <-interruptionChannel
@@ -77,6 +81,8 @@ func main() {
 	})
 
 	err = serviceGroup.Run()
+
+	metricsServer.Shutdown()
 	cache.Client.Close()
 	logger.Info("services stopped", zap.Error(err))
 

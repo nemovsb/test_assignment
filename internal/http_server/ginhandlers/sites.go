@@ -15,9 +15,10 @@ import (
 type SiteHandler struct {
 	TTL     uint
 	Timeout uint
-	Cache   Cacher
-	DB      DB
-	Logger  *zap.Logger
+	Metrics
+	Cache  Cacher
+	DB     DB
+	Logger *zap.Logger
 	CommonHandler
 }
 
@@ -41,6 +42,7 @@ func NewSiteHandler(ttl uint, timeout uint, cache Cacher, db DB, logger *zap.Log
 	return &SiteHandler{
 		TTL:     ttl,
 		Timeout: timeout,
+		Metrics: *NewMetrics(),
 		Cache:   cache,
 		DB:      db,
 		Logger:  logger,
@@ -48,6 +50,9 @@ func NewSiteHandler(ttl uint, timeout uint, cache Cacher, db DB, logger *zap.Log
 }
 
 func (h *SiteHandler) CheckSite(ctx *gin.Context) {
+
+	h.Metrics.RequestCount.Inc()
+
 	searchUrl, ok := ctx.GetQuery("search")
 	if !ok {
 		h.StatusBadRequest(ctx, errors.New(`"search" param not found`))
@@ -102,6 +107,8 @@ func (h *SiteHandler) CheckSite(ctx *gin.Context) {
 }
 
 func (h *SiteHandler) GetReport(ctx *gin.Context) {
+
+	h.Metrics.RequestCount.Inc()
 
 	type Param struct {
 		From time.Time `form:"from" binding:"required"`

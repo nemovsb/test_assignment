@@ -13,6 +13,7 @@ services:
       - redis
     ports:
       - "8081:8081"
+      - "2112:2112"
 
   postgres:
     image: postgres:13.3
